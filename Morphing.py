@@ -130,7 +130,7 @@ def construct_smoothness_cost(subject, invVs, adjacent) -> Tuple[sparse.spmatrix
     return AEs, Bs
 
 
-def compute_correspondence(source_org: meshlib.Mesh, markers: np.ndarray) -> np.ndarray:
+def compute_morphing(source_org: meshlib.Mesh, markers: np.ndarray) -> meshlib.Mesh:
     Ws = 1.0
     Wi = 0.001
 
@@ -199,10 +199,12 @@ def compute_correspondence(source_org: meshlib.Mesh, markers: np.ndarray) -> np.
         # Reconstruct vertices x
         revert_markers(A, x, markers, out=vertices)
 
-        result = meshlib.Mesh(vertices=vertices[:len(source_org.vertices)],
-                              faces=source_org.faces)
+        riposta = meshlib.Mesh(
+            vertices=vertices[:len(source_org.vertices)],
+            faces=source_org.faces
+        )
         
-        meshlib.Mesh.save_obj(result, "samples/result.obj")
+        return riposta
 
 
 def parse_markers(src_file: str, markfile: str) -> dict: # { int: np.array }  source index -> target vertex
@@ -221,10 +223,17 @@ def parse_markers(src_file: str, markfile: str) -> dict: # { int: np.array }  so
     return markers
 
 if __name__ == "__main__":
-    src_file = 'samples/template.obj'
+    '''
+    Template file => src_path
+    Markers file  => marker_path
+    '''
+    src_path = 'samples/template.obj'
+    marker_path = 'samples/markers.csv'
+    
+    markers = parse_markers(src_path, marker_path)
 
-    markers = parse_markers(src_file, 'samples/markers.csv')
+    source_mesh = meshlib.Mesh.load(src_path)
 
-    source_org = meshlib.Mesh.load(src_file)
+    riposta_mesh = compute_morphing(source_mesh, markers)
 
-    compute_correspondence(source_org, markers)
+    meshlib.Mesh.save_obj(riposta_mesh, "samples/result.obj")
